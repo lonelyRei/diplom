@@ -5,7 +5,6 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/lonelyRei/diplomApi/pkg/service"
-	"net/http"
 	"time"
 )
 
@@ -30,12 +29,10 @@ func (h *Handler) groupAuthRoutes(router *gin.Engine) {
 	auth := router.Group("/auth")
 	{
 		// Обработчик регистрации нового пользователя
-		auth.POST("/register", func(context *gin.Context) {
-			context.JSON(http.StatusOK, map[string]interface{}{"success": true})
-		})
+		auth.POST("/register", h.register)
 
 		// Обработчик авторизации
-		//auth.POST("/login", h.signIn)
+		auth.POST("/login", h.login)
 	}
 }
 

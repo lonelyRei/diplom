@@ -17,7 +17,7 @@ func main() {
 
 	srv := new(server.Server)
 
-	// todo: Пока что хардкодом, в будущем исправить
+	// todo Пока что хардкодом, в будущем исправить
 	if err := srv.Run("80", appHandler.InitRoutes()); err != nil {
 		log.Fatalf("error happened while running server: %s", err.Error())
 	}
