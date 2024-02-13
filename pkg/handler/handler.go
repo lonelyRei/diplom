@@ -1,53 +1,66 @@
 package handler
 
 import (
-	"fmt"
-	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/lonelyRei/diplomApi/entities"
 	"github.com/lonelyRei/diplomApi/pkg/service"
-	"time"
+	"net/http"
 )
 
+type Request struct {
+	Method  string
+	Data    interface{}
+	Context *gin.Context
+}
+
 type Handler struct {
-	services *service.Service
+	services       *service.Service
+	requestChannel chan Request
 }
 
 func NewHandler(services *service.Service) *Handler {
-	return &Handler{services: services}
+	return &Handler{
+		services:       services,
+		requestChannel: make(chan Request),
+	}
 }
 
 func (h *Handler) InitRoutes() *gin.Engine {
-	router := gin.New()
-	h.setCors(router)
-
+	router := gin.Default()
 	h.groupAuthRoutes(router)
-
 	return router
+}
+
+func (h *Handler) StartWorkerPool(workerCount int) {
+	for i := 0; i < workerCount; i++ {
+		go h.worker(i)
+	}
+}
+
+func (h *Handler) worker(id int) {
+	for request := range h.requestChannel {
+		switch request.Method {
+		case "register":
+			user := request.Data.(entities.User)
+			_, err := h.services.Authorization.CreateUser(user)
+			if err != nil {
+				sendErrorResponse(request.Context, http.StatusInternalServerError, err.Error())
+				continue
+			}
+			// Отправка ответа на запрос
+			request.Context.JSON(http.StatusOK, id)
+		case "login":
+			// Обработка запроса авторизации
+			// ...
+			// Другие обработчики
+		}
+	}
 }
 
 func (h *Handler) groupAuthRoutes(router *gin.Engine) {
 	auth := router.Group("/auth")
 	{
-		// Обработчик регистрации нового пользователя
 		auth.POST("/register", h.register)
-
-		// Обработчик авторизации
 		auth.POST("/login", h.login)
 	}
-}
-
-func (h *Handler) setCors(router *gin.Engine) {
-	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"*"},
-		AllowMethods:     []string{"PUT", "PATCH", "POST", "GET", "DELETE"},
-		AllowHeaders:     []string{"Origin", "Authorization", "Content-Type", "Accept-Encoding"},
-		ExposeHeaders:    []string{"Content-Length", "Access-Control-Allow-Origin", "Access-Control-Allow-Credentials", "Access-Control-Allow-Headers", "Access-Control-Allow-Methods"},
-		AllowCredentials: true,
-
-		AllowOriginFunc: func(origin string) bool {
-			fmt.Println(origin == "http://localhost:5173" || origin == "http://localhost:5173/")
-			return origin == "http://localhost:5173" || origin == "http://localhost:5173/"
-		},
-		MaxAge: 12 * time.Hour,
-	}))
 }
