@@ -6,13 +6,19 @@ import (
 	"net/http"
 )
 
-func (h *Handler) register(context *gin.Context) {
+func (h *Handler) register(c *gin.Context) {
 	var user entities.User
-	if err := context.BindJSON(&user); err != nil {
-		sendErrorResponse(context, http.StatusBadRequest, err.Error())
+	if err := c.BindJSON(&user); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	h.requestChannel <- Request{Method: "register", Data: user, Context: context}
+
+	id, err := h.services.CreateUser(user)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"id": id})
 }
 
 type authUserInput struct {
@@ -21,10 +27,26 @@ type authUserInput struct {
 }
 
 func (h *Handler) login(context *gin.Context) {
-	var user authUserInput
-	if err := context.BindJSON(&user); err != nil {
-		sendErrorResponse(context, http.StatusBadRequest, err.Error())
+	go func() {
+		var user authUserInput
+		if err := context.BindJSON(&user); err != nil {
+			sendErrorResponse(context, http.StatusBadRequest, err.Error())
+			return
+		}
+	}()
+}
+
+func (h *Handler) test(context *gin.Context) {
+	var test entities.Test
+	if err := context.BindJSON(&test); err != nil {
+		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	h.requestChannel <- Request{Method: "login", Data: user, Context: context}
+
+	id, err := h.services.Test(test)
+	if err != nil {
+		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	context.JSON(http.StatusOK, gin.H{"id": id})
 }

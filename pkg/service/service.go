@@ -7,6 +7,7 @@ import (
 
 type Authorization interface {
 	CreateUser(user entities.User) (int, error)
+	Test(test entities.Test) (int, error)
 }
 
 type Service struct {

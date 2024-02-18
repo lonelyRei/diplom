@@ -9,7 +9,13 @@ import (
 )
 
 func main() {
-	appRepo := repository.NewRepository(nil)
+	db, err := initPostgresDB()
+
+	if err != nil {
+		log.Fatalf("произошла ошибка при подключении к базе данных: %s", err.Error())
+	}
+
+	appRepo := repository.NewRepository(db)
 
 	appServices := service.NewService(appRepo)
 
@@ -17,10 +23,7 @@ func main() {
 
 	srv := new(server.Server)
 
-	appHandler.StartWorkerPool(5)
-
-	// todo Пока что хардкодом, в будущем исправить
 	if err := srv.Run("80", appHandler.InitRoutes()); err != nil {
-		log.Fatalf("error happened while running server: %s", err.Error())
+		log.Fatalf("произошла ошибка при работе сервера: %s", err.Error())
 	}
 }
