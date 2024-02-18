@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/jmoiron/sqlx"
 	"github.com/lonelyRei/diplomApi/entities"
+	"time"
 )
 
 const usersTableName = "users"
@@ -34,19 +35,32 @@ func (r *AuthRepository) CreateUser(user entities.User) (int, error) {
 	return id, nil
 }
 
+func (r *AuthRepository) GetUser(username, password string) (entities.User, error) {
+	var user entities.User
+
+	query := fmt.Sprintf("SELECT id, name, username FROM %s WHERE username=$1 AND password_hash=$2",
+		usersTableName)
+
+	err := r.db.Get(&user, query, username, password)
+
+	return user, err
+}
+
 func (r *AuthRepository) Test(test entities.Test) (int, error) {
 
-	var id int
+	//var id int
 
-	query := fmt.Sprintf(
-		"INSERT INTO %s (username) values ($1) RETURNING id",
-		testTableName)
+	//query := fmt.Sprintf(
+	//	"INSERT INTO %s (username) values ($1) RETURNING id",
+	//	testTableName)
 
-	row := r.db.QueryRow(query, test.Username)
+	//row := r.db.QueryRow(query, test.Username)
+	//
+	//if err := row.Scan(&id); err != nil {
+	//	return 0, err
+	//}
 
-	if err := row.Scan(&id); err != nil {
-		return 0, err
-	}
+	time.Sleep(time.Millisecond * 200)
 
-	return id, nil
+	return 1, nil
 }

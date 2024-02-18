@@ -26,6 +26,6 @@ func (h *Handler) groupAuthRoutes(router *gin.Engine) {
 	{
 		auth.POST("/register", h.register)
 		auth.POST("/login", h.login)
-		auth.POST("/test", h.test)
+		auth.POST("/test", h.userIdentity, h.test)
 	}
 }
